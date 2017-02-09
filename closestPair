@@ -1,0 +1,266 @@
+#!/usr/bin/python
+import math
+import sys
+from operator import itemgetter
+
+def power(x): return x*x
+
+def distance(p1, p2):
+    answer = math.sqrt( power(p1[0] - p2[0]) + power(p1[1] - p2[1]) )
+    return round(answer, 7)
+#------------GETTING THE DISTANCE-----------------------------------#
+
+def setUp():
+    f = sys.stdin
+    s=[]
+    sY= []
+    for line in f:
+        p = line.split(" ")
+        p = [item for item in p if not item.isalpha()] #http://stackoverflow.com/questions/16084642/remove-strings-from-a-list-that-contains-numbers-in-python
+        if (len(p) == 2 ):
+            p = list(map(float, p))
+            p = [ round(elem, 7) for elem in p ] #http://stackoverflow.com/questions/5326112/how-to-round-each-item-in-a-list-of-floats-to-2-decmial-places
+            if (p not in s):
+                s.append(p)
+    s = sorted(s, key = itemgetter(0))
+    return s
+
+def setUpOptimal():
+    f = sys.stdin
+    s=[]
+    sY= []
+    for line in f:
+        p = line.split(" ")
+        p = [item for item in p if not item.isalpha()] #http://stackoverflow.com/questions/16084642/remove-strings-from-a-list-that-contains-numbers-in-python
+        if (len(p) == 2 ):
+            p = list(map(float, p))
+            p = [ round(elem, 7) for elem in p ] #http://stackoverflow.com/questions/5326112/how-to-round-each-item-in-a-list-of-floats-to-2-decmial-places
+            if (p not in s):
+                s.append(p)
+    s = sorted(s, key = itemgetter(0))
+    sY = sorted(s, key = itemgetter(1))
+    return s, sY
+
+
+def brute(s):
+    minDist = float('inf')
+    minimumList=[]
+    lineCount = len(s)
+    for a in range(0, lineCount):
+        for b in range(1, lineCount):
+            if ( (a!=b) and distance(s[a], s[b]) <= minDist  ):
+                if(distance(s[a], s[b]) < minDist):
+                    minimumList=[]
+                minDist = distance(s[a], s[b])
+                minimumList.append((s[a], s[b]))
+    print ("closest pair distance: " +  str(minDist))
+    print(minimumList)
+    return
+
+#----- divide by 2 and find minDist ---- #
+
+def closestPair(listOne):
+    minDist = 10^8
+    minimumList=[]
+    if (len(listOne) <= 3):
+        #BRUTE what if list length is 1 or 0??
+        # if(len(listOne) == 1):
+        #     minDist = 10^8
+        if (len(listOne) == 2):
+            minDist = distance(listOne[0], listOne[1])
+            minimumList.append((listOne[0], listOne[1]))
+        elif (len(listOne) == 3):
+            a = distance(listOne[0], listOne[1])
+            b = distance(listOne[1], listOne[2])
+            c = distance(listOne[0], listOne[2])
+            minDist = min(a,b,c)
+            if minDist == a:
+                minimumList.append((listOne[0], listOne[1]) )
+            if minDist == b:
+                minimumList.append( (listOne[1], listOne[2]) )
+            if minDist == c:
+                minimumList.append( (listOne[0], listOne[2]) )
+    else:
+        half = len(listOne)//2
+        leftHalfX = listOne[:half]
+        rightHalfX = listOne[half:]
+        mid = listOne[half]
+
+        # leftHalfY = []
+        # rightHalfY = []
+        # for p in listTwo:
+        #     if(p < mid):
+        #         leftHalfY.append(p)
+        #     else:
+        #         rightHalfY.append(p)
+
+        lpair, ldist = closestPair(leftHalfX)
+        rpair, rdist = closestPair(rightHalfX)
+        d = min(ldist, rdist)
+        cpair, cdist = combine(listOne, d, mid[0])
+        minDist = min(d, cdist)
+        if(minDist == ldist):
+            minimumList.append(lpair)
+
+        if(minDist == rdist):
+            minimumList.append(rpair)
+
+        if(minDist == cdist):
+            minimumList.append(cpair)
+
+    return minimumList, minDist
+
+
+def combine(listOne, width, midx):
+    minDist = width
+    minimumList=[]
+
+    stripx = []
+    #stripy = []
+
+    for pointX in listOne:
+        # what is mid? an x coordinate of the middle of the list
+        if abs(pointX[0] - midx) <= width:
+            stripx.append(pointX)
+
+    #strip y is going to be stripx sorted by y
+    # for pointY in listTwo:
+    #     # what is mid? an x coordinate of the middle of the list
+    #     if abs(pointY[0] - midx) <= width:
+    #         stripy.append(pointY)
+    stripx = sorted(stripx, key = itemgetter(1))
+    # print("STRIP X: ")
+    # print(stripx)
+    # print("END")
+    #listTwo = sorted(listTwo, key = itemgetter(1))
+    n = len(stripx)
+    for i in range(0, n):
+        p1 = stripx[i]
+        j = i+1
+        while (j < n):
+            p2 = stripx[j]
+            if p2[1] - p1[1] > width:
+                break;
+
+            g = distance ( p1 , p2)
+            if (g <= minDist):
+                if (g < minDist):
+                    minimumList = []
+                minDist = g
+                minimumList.append((p1, p2))
+            j = j+ 1
+
+    return minimumList, minDist
+
+def closestPairOptimal(listOne, listTwo):
+    minDist = 10^8
+    minimumList=[]
+    if (len(listOne) <= 3):
+        #BRUTE what if list length is 1 or 0??
+        if(len(listOne) == 1):
+            minDist = 10^8
+        if (len(listOne) == 2):
+            #print("HELLO2")
+            minDist = distance(listOne[0], listOne[1])
+            minimumList.append((listOne[0], listOne[1]))
+        elif (len(listOne) == 3):
+            a = distance(listOne[0], listOne[1])
+            b = distance(listOne[1], listOne[2])
+            c = distance(listOne[0], listOne[2])
+            minDist = min(a,b,c)
+            if minDist == a:
+                minimumList.append((listOne[0], listOne[1]) )
+            if minDist == b:
+                minimumList.append( (listOne[1], listOne[2]) )
+            if minDist == c:
+                minimumList.append( (listOne[0], listOne[2]) )
+    else:
+        half = len(listOne)//2
+        #print(half)
+        leftHalfX = listOne[:half]
+        rightHalfX = listOne[half:]
+        mid = listOne[half]
+
+        leftHalfY = []
+        rightHalfY = []
+        for p in listTwo:
+            if(p < mid):
+                leftHalfY.append(p)
+            else:
+                rightHalfY.append(p)
+
+        lpair, ldist = closestPairOptimal(leftHalfX, leftHalfY)
+        rpair, rdist = closestPairOptimal(rightHalfX, rightHalfY)
+        d = min(ldist, rdist)
+        cpair, cdist = combineOptimal(listOne, listTwo, d, mid[0])
+        minDist = min(d, cdist)
+        if(minDist == ldist):
+            minimumList.append(lpair)
+
+        if(minDist == rdist):
+            minimumList.append(rpair)
+
+        if(minDist == cdist):
+            minimumList.append(cpair)
+
+    return minimumList, minDist
+
+
+def combineOptimal(listOne, listTwo, width, midx):
+    minDist = width
+    minimumList=[]
+
+    stripx = []
+    stripy = []
+
+    for pointX in listOne:
+        # what is mid? an x coordinate of the middle of the list
+        if abs(pointX[0] - midx) <= width:
+            stripx.append(pointX)
+
+    #strip y is going to be stripx sorted by y
+    for pointY in listTwo:
+        # what is mid? an x coordinate of the middle of the list
+        if abs(pointY[0] - midx) <= width:
+            stripy.append(pointY)
+
+    #listTwo = sorted(listTwo, key = itemgetter(1))
+    n = len(stripx)
+    for i in range(0, n):
+        p1 = stripy[i]
+        j = i+1
+        while (j < n):
+            p2 = stripy[j]
+            if p2[1] - p1[1] > width:
+                break;
+
+            g = distance ( p1 , p2)
+            if (g <= minDist):
+                if (g < minDist):
+                    minimumList = []
+                minDist = g
+                minimumList.append((p1, p2))
+            j = j+ 1
+
+    return minimumList, minDist
+
+
+
+# Entry point to code
+if (sys.argv[1:][0] == "optimal"):
+    print("DOING OPTIMAL")
+    wantedList, wantedListY = setUpOptimal()
+    testing = closestPairOptimal(wantedList, wantedListY)
+    print("closest distance pair: " + str(testing[1]))
+    print(testing[0])
+
+if (sys.argv[1:][0] == "basic"):
+    print("DOING BASIC")
+    wantedList = setUp()
+    testing = closestPair(wantedList)
+    print("closest distance pair: " + str(testing[1]))
+    print(testing[0])
+
+if (sys.argv[1:][0] == "brute"):
+    print("DOING BRUTE")
+    brute(setUp())
